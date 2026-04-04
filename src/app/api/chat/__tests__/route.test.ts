@@ -32,14 +32,12 @@ vi.mock("@ai-sdk/openai", () => ({
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          clerkId: "user_123",
-          email: "test@test.com",
-          plan: "free",
-          queriesUsed: 0,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        clerkId: "user_123",
+        email: "test@test.com",
+        plan: "free",
+        queriesUsed: 0,
+      }),
       create: vi.fn(),
       update: vi.fn(),
     },
