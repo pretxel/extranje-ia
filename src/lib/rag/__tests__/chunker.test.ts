@@ -16,10 +16,10 @@ describe("chunkDocument", () => {
     expect(result[0].pageContent).toContain("Esta es una frase corta");
   });
 
-  it("returns multiple chunks for text longer than 2000 chars", async () => {
+  it("returns multiple chunks for text longer than chunkSize (9000 chars)", async () => {
     const sentence =
       "El solicitante deberá presentar la documentación requerida en el plazo establecido. ";
-    const longContent = sentence.repeat(40); // ~3600 chars
+    const longContent = sentence.repeat(120); // ~10080 chars
     const result = await chunkDocument(longContent, "doc-2", META);
     expect(result.length).toBeGreaterThan(1);
   });
@@ -38,7 +38,7 @@ describe("chunkDocument", () => {
   it("chunks include overlap for long content", async () => {
     const sentence =
       "El solicitante deberá presentar la documentación requerida en el plazo establecido. ";
-    const longContent = sentence.repeat(40);
+    const longContent = sentence.repeat(120);
     const result = await chunkDocument(longContent, "doc-3", META);
 
     // With chunkOverlap: 200, consecutive chunks share text
@@ -49,7 +49,7 @@ describe("chunkDocument", () => {
   it("first chunk starts with the beginning of content", async () => {
     const sentence =
       "El solicitante deberá presentar la documentación requerida en el plazo establecido. ";
-    const longContent = sentence.repeat(40);
+    const longContent = sentence.repeat(120);
     const result = await chunkDocument(longContent, "doc-4", META);
     expect(result[0].pageContent.startsWith("El")).toBe(true);
   });

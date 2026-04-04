@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Clerk mock ---
-const mockAuth = vi.fn();
-vi.mock("@clerk/nextjs/server", () => ({ auth: mockAuth }));
+const mockAuth = vi.hoisted(() => vi.fn());
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: mockAuth,
+  currentUser: vi.fn().mockResolvedValue(null),
+}));
 
 // --- AI SDK mocks ---
 vi.mock("ai", () => ({
@@ -24,6 +27,24 @@ vi.mock("ai", () => ({
 
 vi.mock("@ai-sdk/openai", () => ({
   openai: vi.fn().mockReturnValue("mocked-model"),
+}));
+
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn().mockResolvedValue({ clerkId: "user_123", email: "test@test.com", plan: "free", queriesUsed: 0 }),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("@/lib/plans", () => ({
+  hasReachedLimit: vi.fn().mockReturnValue(false),
+}));
+
+vi.mock("@/lib/openai", () => ({
+  buildSystemPrompt: vi.fn().mockReturnValue("mocked system prompt"),
 }));
 
 import { POST } from "../route";

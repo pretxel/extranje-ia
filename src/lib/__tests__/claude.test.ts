@@ -5,7 +5,7 @@ vi.mock("@anthropic-ai/sdk", () => ({
   default: vi.fn().mockImplementation(() => ({})),
 }));
 
-import { buildSystemPrompt } from "../claude";
+import { buildSystemPrompt } from "../openai";
 
 describe("buildSystemPrompt", () => {
   it("includes the passed context string in the output", () => {
