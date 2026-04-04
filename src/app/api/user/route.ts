@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import type { Plan } from "@/lib/plans";
 import { getLimit } from "@/lib/plans";
@@ -10,8 +10,10 @@ export async function GET() {
   // Find or create user
   let user = await prisma.user.findUnique({ where: { clerkId: userId } });
   if (!user) {
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress || "";
     user = await prisma.user.create({
-      data: { clerkId: userId, email: user.email, plan: "free", queriesUsed: 0 },
+      data: { clerkId: userId, email, plan: "free", queriesUsed: 0 },
     });
   }
 

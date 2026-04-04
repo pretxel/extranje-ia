@@ -409,12 +409,12 @@ function HowItWorks() {
                 className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 font-display text-2xl font-bold"
                 style={{
                   background:
-                    i === 1
+                    s.num === "02"
                       ? "linear-gradient(135deg, var(--accent), var(--accent-warm))"
                       : "var(--surface-2)",
-                  color: i === 1 ? "white" : "var(--accent)",
+                  color: s.num === "02" ? "white" : "var(--accent)",
                   border: "1px solid",
-                  borderColor: i === 1 ? "transparent" : "var(--border)",
+                  borderColor: s.num === "02" ? "transparent" : "var(--border)",
                 }}
               >
                 {s.num}
