@@ -4,50 +4,94 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Extranjería.ai** — an AI-powered assistant for Spanish immigration queries (NIE, TIE, visas, residency permits). It answers questions in seconds with verified, up-to-date sources (BOE, sede.gob.es, SEPE). See `DEFINITION.md` for the full product spec.
+**Extranjería.ai** — an AI-powered assistant for Spanish immigration queries (NIE, TIE, visas, residency permits). It answers questions in seconds with verified, up-to-date sources (BOE, sede.gob.es, SEPE).
 
-## Planned Stack
+## Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js (App Router) + TypeScript |
-| Backend | Node.js + TypeScript |
-| Database | PostgreSQL + pgvector |
-| LLM | Claude Sonnet (Anthropic API) |
-| Scraping | Playwright + cron (GitHub Actions or Railway) |
-| Auth | Clerk |
-| Payments | Stripe |
-| Deploy | Vercel (frontend) + Railway (backend/workers) |
+| Framework | Next.js 16 (App Router) + TypeScript |
+| Styling | Tailwind CSS v4 |
+| Auth | Clerk v6 |
+| Database | PostgreSQL + pgvector — Prisma 7 with `@prisma/adapter-pg` |
+| RAG | LangChain (`RecursiveCharacterTextSplitter`, `PGVectorStore`, `OpenAIEmbeddings`) |
+| LLM | GPT-4o via Vercel AI SDK v6 (`streamText`, `useChat`) |
+| Scraping | axios + cheerio (BOE Código de Extranjería index) |
+| Payments | Stripe v17 |
+| Linting | Biome (primary) + ESLint |
+| Testing | Vitest |
+| Package manager | pnpm 10.22.0 |
 
-## Architecture: RAG Knowledge Pipeline
-
-The core of the product is a RAG pipeline:
+## Architecture: RAG Pipeline
 
 ```
-BOE / sede.gob.es / SEPE
-        ↓  (daily cron scraper)
-   Chunking + processing
-        ↓
-   Embeddings (OpenAI / Cohere)
-        ↓
-   pgvector (PostgreSQL)
-        ↓
-   Retrieval → Claude Sonnet
-        ↓
-   Response with source citation + verification date
+BOE biblioteca_juridica/codigos (Código de Extranjería index)
+        |
+        v  src/lib/scraper/boe.ts  (axios + cheerio)
+   Raw documents → PostgreSQL documents table
+        |
+        v  src/lib/rag/chunker.ts  (LangChain RecursiveCharacterTextSplitter)
+   Chunks (9000 chars, 400 overlap) as LangChain Document[]
+        |
+        v  src/lib/rag/vectorstore.ts  (PGVectorStore → rag_vectors table)
+   Embeddings via OpenAI text-embedding-ada-002
+        |
+        v  src/lib/rag/retrieval.ts  (similaritySearchWithScore, cosine)
+   Top-k chunks + document metadata from PostgreSQL
+        |
+        v  src/app/api/chat/route.ts  (Vercel AI SDK streamText)
+   GPT-4o response streamed with source-url parts
 ```
 
-Key constraint: **the LLM must only answer using retrieved context** — no free generation about regulations to prevent hallucinations.
+Key constraint: **the LLM must only answer using retrieved context** — no free generation about regulations.
 
-## MVP Phases
+## Commands
 
-- **Phase 1** — RAG pipeline, scraper (BOE + sede.gob.es), chat UI with source citations, Clerk auth
-- **Phase 2** — Stripe (Pro €9/mo + Empresa €49/mo), usage limits per plan, user dashboard
-- **Phase 3** — Email alerts for regulatory changes, auto-generated document checklists, public REST API
+```bash
+pnpm dev                # start dev server
+pnpm build              # production build
+pnpm test               # vitest watch
+pnpm vitest run         # single test run
+pnpm vitest run src/lib/rag/__tests__/chunker.test.ts  # single file
+pnpm lint:biome         # check with Biome
+pnpm lint:fix           # auto-fix with Biome
+pnpm format             # format with Biome
+pnpm db:migrate         # prisma migrate dev
+pnpm db:generate        # regenerate Prisma client
+pnpm ingest             # run RAG ingestion pipeline
+```
+
+## Key File Locations
+
+- `prisma/schema.prisma` — DB models (User, Document, Chunk, Conversation, Message)
+- `prisma.config.ts` — Prisma 7 config (loads `.env.local` via dotenv, url from `process.env.DATABASE_URL`)
+- `src/lib/db/index.ts` — Prisma singleton using `PrismaPg` driver adapter
+- `src/lib/rag/vectorstore.ts` — `PGVectorStore.initialize()` using `rag_vectors` table (LangChain-managed)
+- `src/lib/rag/pipeline.ts` — ingestion: scrape → upsert document → chunk → `vectorStore.addDocuments()`
+- `src/lib/rag/retrieval.ts` — `similaritySearchWithScore()` + Prisma join for document metadata
+- `src/app/api/chat/route.ts` — plan limit check → RAG retrieval → `streamText` with `source-url` parts
+- `src/components/chat/ChatInterface.tsx` — `useChat` with `DefaultChatTransport`
+- `src/lib/plans.ts` — `PLAN_LIMITS`, `hasReachedLimit()`
+- `src/lib/stripe.ts` — Stripe client + `STRIPE_PRICES` map
+- `src/middleware.ts` — Clerk `clerkMiddleware`, protects `/dashboard/**`, `/api/chat/**`, `/api/checkout/**`
+- `biome.json` — Biome config (recommended rules, double quotes, indent 2, line width 100)
+
+## Prisma Notes
+
+- Prisma 7 requires `prisma.config.ts` — the `datasource.url` is NOT in `schema.prisma`
+- `Chunk.embedding` uses `Unsupported("vector(1536)")` in schema; raw SQL used for inserts
+- LangChain's `rag_vectors` table is separate from the `chunks` table — it is auto-created by `PGVectorStore.initialize()`
+- Always run `pnpm db:generate` after schema changes
+
+## MVP Status
+
+- **Phase 1 — done**: RAG pipeline, BOE scraper, chat UI with source citations, Clerk auth
+- **Phase 2 — done**: Stripe (Pro €9/mo + Empresa €49/mo), usage limits, user dashboard
+- **Phase 3 — pending**: Email alerts for regulatory changes, document checklists, public REST API
 
 ## Key Product Rules
 
 - Every response must cite source + verification date
-- Alert if scraper hasn't run in >24h
-- Disclaimer on all responses: orientation only, not legal advice
-- Free plan: 5 queries/month; Pro: unlimited with personalization
+- LLM answers only from retrieved context — no free generation about regulations
+- Free plan: 5 queries/month; Pro/Empresa: unlimited
+- All responses carry a disclaimer: orientation only, not legal advice

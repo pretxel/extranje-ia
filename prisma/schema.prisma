@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  clerkId       String         @unique @map("clerk_id")
+  email         String
+  plan          String         @default("free")
+  queriesUsed   Int            @default(0) @map("queries_used")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  conversations Conversation[]
+
+  @@map("users")
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  url        String   @unique
+  title      String
+  source     String
+  content    String
+  scrapedAt  DateTime @default(now()) @map("scraped_at")
+  verifiedAt DateTime @default(now()) @map("verified_at")
+  chunks     Chunk[]
+
+  @@map("documents")
+}
+
+model Chunk {
+  id         String                       @id @default(uuid())
+  documentId String                       @map("document_id")
+  content    String
+  embedding  Unsupported("vector(1536)")?
+  metadata   Json?
+  document   Document                     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("chunks")
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  title     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  role           String
+  content        String
+  sources        Json?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
