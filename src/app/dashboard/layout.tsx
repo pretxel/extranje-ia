@@ -24,6 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             style={{ color: "var(--text-muted)" }}
           >
             <svg
+              aria-hidden="true"
               className="w-4 h-4"
               fill="none"
               viewBox="0 0 24 24"

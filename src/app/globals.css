@@ -138,7 +138,7 @@ body {
 }
 .card-hover:hover {
   transform: translateY(-5px);
-  border-color: rgba(255, 107, 53, 0.25) !important;
+  border-color: rgba(255, 107, 53, 0.25);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.5),
     0 0 40px rgba(255, 107, 53, 0.07);

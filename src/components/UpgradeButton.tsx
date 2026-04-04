@@ -39,6 +39,7 @@ export default function UpgradeButton({ plan, label, highlight }: UpgradeButtonP
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       disabled={loading}
       className="block w-full text-center py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 hover:scale-[1.02] mb-8 disabled:opacity-60 disabled:cursor-not-allowed"

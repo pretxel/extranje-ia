@@ -17,7 +17,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
     el.style.height = "auto";
     const lineHeight = 24;
     const maxHeight = lineHeight * 5;
-    el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
     el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
   }, []);
 
@@ -61,6 +61,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           disabled={isLoading}
         />
         <button
+          type="button"
           onClick={handleSend}
           disabled={!canSend}
           className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -68,6 +69,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
         >
           {isLoading ? (
             <svg
+              aria-hidden="true"
               className="h-4 w-4 animate-spin"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -89,6 +91,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
             </svg>
           ) : (
             <svg
+              aria-hidden="true"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"

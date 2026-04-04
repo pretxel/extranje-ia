@@ -59,6 +59,7 @@ export default function UsageBanner() {
         )}
       </span>
       <button
+        type="button"
         onClick={handleUpgrade}
         disabled={loading}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90 disabled:opacity-50"

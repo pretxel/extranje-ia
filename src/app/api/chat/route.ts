@@ -55,7 +55,12 @@ export async function POST(req: Request) {
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
       for (const source of sources) {
-        writer.write({ type: "source-url", sourceId: source.url, url: source.url, title: source.title });
+        writer.write({
+          type: "source-url",
+          sourceId: source.url,
+          url: source.url,
+          title: source.title,
+        });
       }
       writer.merge(result.toUIMessageStream());
     },

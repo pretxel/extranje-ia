@@ -20,8 +20,8 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             : "bg-gray-100 text-gray-900 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[75%]"
         }
       >
-        {textParts.map((part, i) => (
-          <p key={i} className="whitespace-pre-wrap">
+        {textParts.map((part) => (
+          <p key={part.text} className="whitespace-pre-wrap">
             {part.text}
           </p>
         ))}
@@ -29,8 +29,8 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
         {sourceParts.length > 0 && (
           <div className="mt-3 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">Fuentes</p>
-            {sourceParts.map((part, i) => (
-              <SourceCard key={i} url={part.url} title={part.title} />
+            {sourceParts.map((part) => (
+              <SourceCard key={part.url} url={part.url} title={part.title} />
             ))}
           </div>
         )}

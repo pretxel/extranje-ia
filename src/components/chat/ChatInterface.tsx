@@ -17,7 +17,7 @@ export default function ChatInterface() {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container) container.scrollTop = container.scrollHeight;
-  }, [messages]);
+  }, []);
 
   const isLoading = status === "submitted" || status === "streaming";
 

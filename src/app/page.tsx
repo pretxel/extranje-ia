@@ -187,6 +187,7 @@ function Hero() {
             >
               Empezar gratis
               <svg
+                aria-hidden="true"
                 className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -256,7 +257,7 @@ function SourcesStrip() {
             >
               <span
                 className="text-xs font-bold px-2 py-0.5 rounded"
-                style={{ background: s.color + "22", color: s.color }}
+                style={{ background: `${s.color}22`, color: s.color }}
               >
                 {s.label}
               </span>
@@ -324,9 +325,9 @@ function Features() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {features.map((f, i) => (
+          {features.map((f) => (
             <div
-              key={i}
+              key={f.title}
               className={`card-hover rounded-2xl p-6 ${f.large ? "md:col-span-1" : ""}`}
               style={{
                 background: "var(--surface)",
@@ -402,8 +403,8 @@ function HowItWorks() {
             }}
           />
 
-          {steps.map((s, i) => (
-            <div key={i} className="relative text-center">
+          {steps.map((s) => (
+            <div key={s.num} className="relative text-center">
               <div
                 className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 font-display text-2xl font-bold"
                 style={{
@@ -512,9 +513,9 @@ function Pricing() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 items-start max-w-3xl mx-auto">
-          {plans.map((plan, i) => (
+          {plans.map((plan) => (
             <div
-              key={i}
+              key={plan.name}
               className="card-hover relative rounded-2xl p-8"
               style={{
                 background: plan.highlight ? "var(--surface-2)" : "var(--surface)",
@@ -564,16 +565,17 @@ function Pricing() {
                 </Link>
               ) : (
                 <UpgradeButton
-                  plan={plan.stripePlan!}
+                  plan={plan.stripePlan as "pro" | "empresa"}
                   label={plan.cta}
                   highlight={plan.highlight}
                 />
               )}
 
               <ul className="space-y-3">
-                {plan.features.map((f, j) => (
-                  <li key={j} className="flex items-start gap-2.5 text-sm">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm">
                     <svg
+                      aria-hidden="true"
                       className="w-4 h-4 mt-0.5 shrink-0"
                       style={{ color: plan.highlight ? "var(--accent)" : "#10B981" }}
                       fill="none"
@@ -590,13 +592,14 @@ function Pricing() {
                     <span>{f}</span>
                   </li>
                 ))}
-                {plan.missing.map((f, j) => (
+                {plan.missing.map((f) => (
                   <li
-                    key={j}
+                    key={f}
                     className="flex items-start gap-2.5 text-sm"
                     style={{ color: "var(--text-muted)" }}
                   >
                     <svg
+                      aria-hidden="true"
                       className="w-4 h-4 mt-0.5 shrink-0 opacity-30"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -657,6 +660,7 @@ function FinalCta() {
         >
           Empieza gratis — sin tarjeta
           <svg
+            aria-hidden="true"
             className="w-5 h-5"
             fill="none"
             viewBox="0 0 24 24"
@@ -687,10 +691,10 @@ function Footer() {
           © 2025 Extranjería.ai · Información orientativa, no asesoramiento jurídico.
         </p>
         <div className="flex gap-6 text-sm" style={{ color: "var(--text-muted)" }}>
-          <a href="#" className="hover:text-white transition-colors">
+          <a href="/privacidad" className="hover:text-white transition-colors">
             Privacidad
           </a>
-          <a href="#" className="hover:text-white transition-colors">
+          <a href="/terminos" className="hover:text-white transition-colors">
             Términos
           </a>
           <a href="mailto:hola@extranjeria.ai" className="hover:text-white transition-colors">

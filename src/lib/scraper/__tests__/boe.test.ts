@@ -72,7 +72,7 @@ describe("scrapeBOE", () => {
       .mockResolvedValueOnce({ data: makeLawPage("Contenido ley 2.") });
 
     const results = await scrapeBOE();
-    results.forEach((doc) => expect(doc.source).toBe("boe"));
+    for (const doc of results) expect(doc.source).toBe("boe");
   });
 
   it("returns correct document shape", async () => {
