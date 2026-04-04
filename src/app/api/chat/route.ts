@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   let user = await prisma.user.findUnique({ where: { clerkId: userId } });
   if (!user) {
     user = await prisma.user.create({
-      data: { clerkId: userId, email: `${userId}@pending.local`, plan: "free", queriesUsed: 0 },
+      data: { clerkId: userId, email: user.email, plan: "free", queriesUsed: 0 },
     });
   }
 
@@ -41,6 +41,7 @@ export async function POST(req: Request) {
     model: openai("gpt-4o"),
     system: buildSystemPrompt(contextText),
     messages: await convertToModelMessages(messages),
+
     onFinish: async () => {
       await prisma.user.update({
         where: { clerkId: userId },

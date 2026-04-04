@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { STRIPE_PRICES, stripe } from "@/lib/stripe";
 
@@ -15,20 +15,31 @@ export async function POST(req: Request) {
   // Look up or create user in DB
   let user = await prisma.user.findUnique({ where: { clerkId: userId } });
   if (!user) {
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@pending.local`;
     user = await prisma.user.create({
-      data: { clerkId: userId, email: `${userId}@pending.local`, plan: "free", queriesUsed: 0 },
+      data: { clerkId: userId, email, plan: "free", queriesUsed: 0 },
     });
   }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    payment_method_types: ["card"],
-    line_items: [{ price: STRIPE_PRICES[plan], quantity: 1 }],
-    customer_email: user.email,
-    metadata: { clerkUserId: userId, plan },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/chat?upgraded=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/#precios`,
-  });
+  let paymentLink: Awaited<ReturnType<typeof stripe.paymentLinks.create>>;
+  try {
+    paymentLink = await stripe.paymentLinks.create({
+      line_items: [{ price: STRIPE_PRICES[plan], quantity: 1 }],
+      after_completion: {
+        type: "redirect",
+        redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/chat?upgraded=true` },
+      },
+      metadata: { plan },
+    });
+  } catch (err) {
+    console.error("[checkout] stripe.paymentLinks.create failed:", err);
+    return new Response("Failed to create payment link", { status: 500 });
+  }
 
-  return Response.json({ url: session.url });
+  const url = new URL(paymentLink.url);
+  url.searchParams.set("prefilled_email", user.email);
+  url.searchParams.set("client_reference_id", userId);
+
+  return Response.json({ url: url.toString() });
 }

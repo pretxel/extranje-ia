@@ -23,9 +23,16 @@ export default function UpgradeButton({ plan, label, highlight }: UpgradeButtonP
         window.location.href = "/sign-up";
         return;
       }
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("[UpgradeButton] checkout error:", res.status, text);
+        setLoading(false);
+        return;
+      }
       const { url } = await res.json();
       if (url) window.location.href = url;
-    } catch {
+    } catch (err) {
+      console.error("[UpgradeButton] unexpected error:", err);
       setLoading(false);
     }
   }

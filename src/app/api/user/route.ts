@@ -11,7 +11,7 @@ export async function GET() {
   let user = await prisma.user.findUnique({ where: { clerkId: userId } });
   if (!user) {
     user = await prisma.user.create({
-      data: { clerkId: userId, email: `${userId}@pending.local`, plan: "free", queriesUsed: 0 },
+      data: { clerkId: userId, email: user.email, plan: "free", queriesUsed: 0 },
     });
   }
 
