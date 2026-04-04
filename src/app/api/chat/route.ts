@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -19,8 +19,10 @@ export async function POST(req: Request) {
   // Find or create user and check usage limits
   let user = await prisma.user.findUnique({ where: { clerkId: userId } });
   if (!user) {
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@pending.local`;
     user = await prisma.user.create({
-      data: { clerkId: userId, email: user.email, plan: "free", queriesUsed: 0 },
+      data: { clerkId: userId, email, plan: "free", queriesUsed: 0 },
     });
   }
 
