@@ -1,5 +1,5 @@
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { OpenAIEmbeddings } from "@langchain/openai";
+import { GoogleEmbeddings } from "./google-embeddings";
 
 export function createEmbeddingProvider() {
   const provider = process.env.AI_PROVIDER ?? "openai";
@@ -10,7 +10,7 @@ export function createEmbeddingProvider() {
         openAIApiKey: process.env.OPENAI_API_KEY,
       });
     case "google":
-      return new GoogleGenerativeAIEmbeddings({
+      return new GoogleEmbeddings({
         model: "text-embedding-004",
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
