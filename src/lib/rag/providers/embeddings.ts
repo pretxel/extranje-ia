@@ -1,5 +1,5 @@
 import { OpenAIEmbeddings } from "@langchain/openai";
-import { GoogleV1Embeddings } from "./google-embeddings";
+import { GoogleEmbeddings } from "./google-embeddings";
 
 export function createEmbeddingProvider() {
   const provider = process.env.AI_PROVIDER ?? "openai";
@@ -12,7 +12,7 @@ export function createEmbeddingProvider() {
     case "google": {
       const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
       if (!apiKey) throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is not set");
-      return new GoogleV1Embeddings(apiKey);
+      return new GoogleEmbeddings(apiKey);
     }
     default:
       throw new Error(`Unknown AI_PROVIDER: "${provider}". Valid values: "openai", "google"`);

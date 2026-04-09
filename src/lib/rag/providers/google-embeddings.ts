@@ -1,14 +1,20 @@
 import { Embeddings } from "@langchain/core/embeddings";
 
-const BASE_URL = "https://generativelanguage.googleapis.com/v1";
-const MODEL = "text-embedding-004";
+const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+const MODEL = "embedding-001";
 
 /**
  * LangChain-compatible embedding class that calls the Google Generative AI
- * v1 REST API directly. text-embedding-004 is only available on v1, not v1beta,
- * and the @langchain/google-genai SDK cannot override the API version.
+ * v1beta REST API directly.
+ *
+ * text-embedding-004 is not universally available (depends on API key type /
+ * billing). embedding-001 is the stable fallback available to all AI Studio keys.
+ * Both produce 768-dimensional vectors.
+ *
+ * NOTE: Switching from OpenAI (1536-dim) requires dropping and recreating the
+ * rag_vectors table so PGVectorStore recreates it at 768 dimensions.
  */
-export class GoogleV1Embeddings extends Embeddings {
+export class GoogleEmbeddings extends Embeddings {
   private readonly apiKey: string;
 
   constructor(apiKey: string) {

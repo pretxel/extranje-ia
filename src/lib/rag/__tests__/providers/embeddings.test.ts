@@ -16,7 +16,7 @@ vi.mock("@langchain/openai", () => ({
 }));
 
 vi.mock("../../providers/google-embeddings", () => ({
-  GoogleV1Embeddings: vi.fn().mockImplementation(() => mockGoogleInstance),
+  GoogleEmbeddings: vi.fn().mockImplementation(() => mockGoogleInstance),
 }));
 
 import { createEmbeddingProvider } from "../../providers/embeddings";
