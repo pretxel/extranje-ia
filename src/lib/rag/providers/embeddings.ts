@@ -13,6 +13,8 @@ export function createEmbeddingProvider() {
       return new GoogleGenerativeAIEmbeddings({
         model: "text-embedding-004",
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+        // text-embedding-004 is only available on v1, not v1beta (the SDK default)
+        baseUrl: "https://generativelanguage.googleapis.com/v1",
       });
     default:
       throw new Error(`Unknown AI_PROVIDER: "${provider}". Valid values: "openai", "google"`);
