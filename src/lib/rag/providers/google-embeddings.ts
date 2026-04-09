@@ -1,27 +1,28 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { google } from "@ai-sdk/google";
 import { Embeddings } from "@langchain/core/embeddings";
+import { embed, embedMany } from "ai";
 
 export class GoogleEmbeddings extends Embeddings {
-  private readonly client: GoogleGenerativeAI;
   private readonly modelName: string;
 
-  constructor(fields?: { apiKey?: string; model?: string }) {
+  constructor(fields?: { model?: string }) {
     super({});
-    this.client = new GoogleGenerativeAI(
-      fields?.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? "",
-    );
     this.modelName = fields?.model ?? "text-embedding-004";
   }
 
   async embedDocuments(texts: string[]): Promise<number[][]> {
-    const model = this.client.getGenerativeModel({ model: this.modelName });
-    const results = await Promise.all(texts.map((text) => model.embedContent(text)));
-    return results.map((r) => r.embedding.values);
+    const { embeddings } = await embedMany({
+      model: google.textEmbeddingModel(this.modelName),
+      values: texts,
+    });
+    return embeddings;
   }
 
   async embedQuery(text: string): Promise<number[]> {
-    const model = this.client.getGenerativeModel({ model: this.modelName });
-    const result = await model.embedContent(text);
-    return result.embedding.values;
+    const { embedding } = await embed({
+      model: google.textEmbeddingModel(this.modelName),
+      value: text,
+    });
+    return embedding;
   }
 }

@@ -10,10 +10,7 @@ export function createEmbeddingProvider() {
         openAIApiKey: process.env.OPENAI_API_KEY,
       });
     case "google":
-      return new GoogleEmbeddings({
-        model: "text-embedding-004",
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      });
+      return new GoogleEmbeddings({ model: "text-embedding-004" });
     default:
       throw new Error(`Unknown AI_PROVIDER: "${provider}". Valid values: "openai", "google"`);
   }
