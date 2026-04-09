@@ -1,5 +1,5 @@
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { OpenAIEmbeddings } from "@langchain/openai";
+import { GoogleV1Embeddings } from "./google-embeddings";
 
 export function createEmbeddingProvider() {
   const provider = process.env.AI_PROVIDER ?? "openai";
@@ -9,13 +9,11 @@ export function createEmbeddingProvider() {
         model: "text-embedding-ada-002",
         openAIApiKey: process.env.OPENAI_API_KEY,
       });
-    case "google":
-      return new GoogleGenerativeAIEmbeddings({
-        model: "text-embedding-004",
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-        // text-embedding-004 is only available on v1, not v1beta (the SDK default)
-        baseUrl: "https://generativelanguage.googleapis.com/v1",
-      });
+    case "google": {
+      const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      if (!apiKey) throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is not set");
+      return new GoogleV1Embeddings(apiKey);
+    }
     default:
       throw new Error(`Unknown AI_PROVIDER: "${provider}". Valid values: "openai", "google"`);
   }

@@ -15,8 +15,8 @@ vi.mock("@langchain/openai", () => ({
   OpenAIEmbeddings: vi.fn().mockImplementation(() => mockOpenAIInstance),
 }));
 
-vi.mock("@langchain/google-genai", () => ({
-  GoogleGenerativeAIEmbeddings: vi.fn().mockImplementation(() => mockGoogleInstance),
+vi.mock("../../providers/google-embeddings", () => ({
+  GoogleV1Embeddings: vi.fn().mockImplementation(() => mockGoogleInstance),
 }));
 
 import { createEmbeddingProvider } from "../../providers/embeddings";
@@ -48,6 +48,7 @@ describe("createEmbeddingProvider", () => {
 
   it("returns Google embeddings when AI_PROVIDER=google", () => {
     process.env.AI_PROVIDER = "google";
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY = "test-key";
     const provider = createEmbeddingProvider();
     expect(provider).toBe(mockGoogleInstance);
     expect(typeof provider.embedDocuments).toBe("function");
