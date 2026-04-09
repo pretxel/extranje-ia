@@ -1,4 +1,3 @@
-import { openai } from "@ai-sdk/openai";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import {
   convertToModelMessages,
@@ -11,6 +10,7 @@ import { prisma } from "@/lib/db";
 import { buildSystemPrompt } from "@/lib/openai";
 import type { Plan } from "@/lib/plans";
 import { hasReachedLimit } from "@/lib/plans";
+import { createLLMProvider } from "@/lib/rag/providers/llm";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   const sources: Array<{ url: string; title: string }> = []; // TODO: from RAG results
 
   const result = streamText({
-    model: openai("gpt-4o"),
+    model: createLLMProvider(),
     system: buildSystemPrompt(contextText),
     messages: await convertToModelMessages(messages),
 
