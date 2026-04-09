@@ -9,8 +9,6 @@ export function createLLMProvider() {
     case "google":
       return google("gemini-2.0-flash");
     default:
-      throw new Error(
-        `Unknown AI_PROVIDER: "${provider}". Valid values: "openai", "google"`
-      );
+      throw new Error(`Unknown AI_PROVIDER: "${provider}". Valid values: "openai", "google"`);
   }
 }
