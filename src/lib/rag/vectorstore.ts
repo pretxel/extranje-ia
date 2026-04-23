@@ -1,16 +1,11 @@
 import { PGVectorStore } from "@langchain/community/vectorstores/pgvector";
-import { OpenAIEmbeddings } from "@langchain/openai";
 import { Pool } from "pg";
+import { createEmbeddingProvider, getEmbeddingDimensions } from "./providers/embeddings";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-const embeddings = new OpenAIEmbeddings({
-  model: "text-embedding-ada-002",
-  openAIApiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function getVectorStore(): Promise<PGVectorStore> {
-  return PGVectorStore.initialize(embeddings, {
+  return PGVectorStore.initialize(createEmbeddingProvider(), {
     pool,
     tableName: "rag_vectors",
     columns: {
@@ -20,5 +15,6 @@ export async function getVectorStore(): Promise<PGVectorStore> {
       metadataColumnName: "metadata",
     },
     distanceStrategy: "cosine" as const,
+    dimensions: getEmbeddingDimensions(),
   });
 }

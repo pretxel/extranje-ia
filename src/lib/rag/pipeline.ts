@@ -11,9 +11,7 @@ export async function runIngestion(): Promise<{ scraped: number; chunked: number
   let chunked = 0;
   const vectorStore = await getVectorStore();
 
-  const scrappedD = scraped.slice(0, 1);
-
-  for (const doc of scrappedD) {
+  for (const doc of scraped) {
     const existing = await prisma.document.findUnique({ where: { url: doc.url } });
     if (existing) {
       console.log(`[ingest] Skipping existing: ${doc.url}`);

@@ -1,4 +1,3 @@
-import { openai } from "@ai-sdk/openai";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import {
   convertToModelMessages,
@@ -11,6 +10,8 @@ import { prisma } from "@/lib/db";
 import { buildSystemPrompt } from "@/lib/openai";
 import type { Plan } from "@/lib/plans";
 import { hasReachedLimit } from "@/lib/plans";
+import { findRelevantChunks } from "@/lib/rag";
+import { createLLMProvider } from "@/lib/rag/providers/llm";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -35,12 +36,26 @@ export async function POST(req: Request) {
 
   const { messages }: { messages: UIMessage[] } = await req.json();
 
-  // TODO: get last user message text and call findRelevantChunks(lastMessage, 5)
-  const contextText = "Contexto de extranjería española. [Pendiente de integrar RAG]";
-  const sources: Array<{ url: string; title: string }> = []; // TODO: from RAG results
+  // Extract last user message text for RAG retrieval
+  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
+  const queryText =
+    lastUserMessage?.parts
+      ?.filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
+      .map((p) => p.text)
+      .join("") ?? "";
+
+  // RAG: retrieve relevant chunks and build context
+  const ragResults = queryText ? await findRelevantChunks(queryText, 5) : [];
+  const contextText =
+    ragResults.length > 0
+      ? ragResults
+          .map((r) => `[Fuente: ${r.document.title} — ${r.document.url}]\n${r.content}`)
+          .join("\n\n---\n\n")
+      : "No se encontró contexto relevante en las fuentes verificadas.";
+  const sources = ragResults.map((r) => ({ url: r.document.url, title: r.document.title }));
 
   const result = streamText({
-    model: openai("gpt-4o"),
+    model: createLLMProvider(),
     system: buildSystemPrompt(contextText),
     messages: await convertToModelMessages(messages),
 

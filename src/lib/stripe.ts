@@ -1,12 +1,24 @@
 import Stripe from "stripe";
 
-if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY is required");
-if (!process.env.STRIPE_PRICE_PRO) throw new Error("STRIPE_PRICE_PRO is required");
+let _stripe: Stripe | undefined;
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-02-24.acacia",
+function createStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY is required");
+  return new Stripe(key, { apiVersion: "2025-02-24.acacia" });
+}
+
+export const stripe = new Proxy({} as Stripe, {
+  get(_, prop: string | symbol) {
+    if (!_stripe) _stripe = createStripe();
+    return (_stripe as unknown as Record<string | symbol, unknown>)[prop];
+  },
 });
 
 export const STRIPE_PRICES = {
-  pro: process.env.STRIPE_PRICE_PRO,
-} as const;
+  get pro(): string {
+    const price = process.env.STRIPE_PRICE_PRO;
+    if (!price) throw new Error("STRIPE_PRICE_PRO is required");
+    return price;
+  },
+};
