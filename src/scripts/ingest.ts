@@ -1,4 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
+
+// Load .env.local first (Next.js convention), then fall back to .env — mirrors prisma.config.ts
+config({ path: ".env.local" });
+config({ path: ".env" });
+
 import { runIngestion } from "@/lib/rag/pipeline";
 
 runIngestion()

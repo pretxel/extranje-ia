@@ -1,6 +1,6 @@
 import { PGVectorStore } from "@langchain/community/vectorstores/pgvector";
 import { Pool } from "pg";
-import { createEmbeddingProvider } from "./providers/embeddings";
+import { createEmbeddingProvider, getEmbeddingDimensions } from "./providers/embeddings";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -15,5 +15,6 @@ export async function getVectorStore(): Promise<PGVectorStore> {
       metadataColumnName: "metadata",
     },
     distanceStrategy: "cosine" as const,
+    dimensions: getEmbeddingDimensions(),
   });
 }
