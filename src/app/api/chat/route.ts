@@ -45,6 +45,7 @@ export async function POST(req: Request) {
   const history = toLangChainHistory(messages.filter((m) => m !== lastUserMessage));
   const systemPrompt = buildSystemPrompt(contextText);
 
+  let completed = false;
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       for (const source of sources) {
@@ -58,16 +59,24 @@ export async function POST(req: Request) {
 
       const id = "msg-text";
       writer.write({ type: "text-start", id });
-      const llmStream = await buildRagChain().stream(
-        buildMessages({ system: systemPrompt, history, question: queryText }),
-      );
-      for await (const chunk of llmStream) {
-        if (chunk) writer.write({ type: "text-delta", id, delta: chunk });
+      try {
+        const llmStream = await buildRagChain().stream(
+          buildMessages({ system: systemPrompt, history, question: queryText }),
+        );
+        for await (const chunk of llmStream) {
+          if (chunk) writer.write({ type: "text-delta", id, delta: chunk });
+        }
+        completed = true;
+      } finally {
+        writer.write({ type: "text-end", id });
       }
-      writer.write({ type: "text-end", id });
     },
-    onError: (error) => (error instanceof Error ? error.message : "Error generando la respuesta."),
+    onError: (error) => {
+      console.error("[chat] stream error:", error);
+      return "Error generando la respuesta. Inténtalo de nuevo.";
+    },
     onFinish: async () => {
+      if (!completed) return;
       await prisma.user.update({
         where: { clerkId: userId },
         data: { queriesUsed: { increment: 1 } },

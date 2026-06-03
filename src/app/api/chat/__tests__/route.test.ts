@@ -8,11 +8,11 @@ vi.mock("@clerk/nextjs/server", () => ({
 }));
 
 // --- AI SDK UI-stream mocks ---
+const streamWriter = vi.hoisted(() => ({ write: vi.fn() }));
 vi.mock("ai", () => ({
   createUIMessageStream: vi.fn().mockImplementation(({ execute }) => {
-    const writer = { write: vi.fn() };
     // Run the bridge but never let an async rejection escape the test.
-    Promise.resolve(execute({ writer })).catch(() => {});
+    Promise.resolve(execute({ writer: streamWriter })).catch(() => {});
     return new ReadableStream();
   }),
   createUIMessageStreamResponse: vi.fn().mockImplementation(({ stream }) => {
@@ -81,6 +81,7 @@ describe("POST /api/chat", () => {
   beforeEach(() => {
     mockAuth.mockReset();
     buildRagChain.mockClear();
+    streamWriter.write.mockClear();
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -101,7 +102,7 @@ describe("POST /api/chat", () => {
     expect(res.headers.get("Content-Type")).toBe("text/event-stream");
   });
 
-  it("builds the LangChain RAG chain when authenticated", async () => {
+  it("opens the text stream and builds the LangChain chain when authenticated", async () => {
     mockAuth.mockResolvedValue({ userId: "user_123" });
     await POST(
       makeRequest({
@@ -109,5 +110,6 @@ describe("POST /api/chat", () => {
       }),
     );
     expect(buildRagChain).toHaveBeenCalled();
+    expect(streamWriter.write).toHaveBeenCalledWith({ type: "text-start", id: "msg-text" });
   });
 });
