@@ -1,17 +1,17 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import {
-  convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-  streamText,
-  type UIMessage,
-} from "ai";
+import { createUIMessageStream, createUIMessageStreamResponse, type UIMessage } from "ai";
 import { prisma } from "@/lib/db";
 import { buildSystemPrompt } from "@/lib/openai";
 import type { Plan } from "@/lib/plans";
 import { hasReachedLimit } from "@/lib/plans";
 import { findRelevantChunks } from "@/lib/rag";
-import { createLLMProvider } from "@/lib/rag/providers/llm";
+import {
+  buildMessages,
+  buildRagChain,
+  extractMessageText,
+  formatContext,
+  toLangChainHistory,
+} from "@/lib/rag/chain";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -36,39 +36,17 @@ export async function POST(req: Request) {
 
   const { messages }: { messages: UIMessage[] } = await req.json();
 
-  // Extract last user message text for RAG retrieval
+  // Last user message drives RAG retrieval; everything before it is chat history.
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
-  const queryText =
-    lastUserMessage?.parts
-      ?.filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
-      .map((p) => p.text)
-      .join("") ?? "";
+  const queryText = lastUserMessage ? extractMessageText(lastUserMessage) : "";
 
-  // RAG: retrieve relevant chunks and build context
   const ragResults = queryText ? await findRelevantChunks(queryText, 5) : [];
-  const contextText =
-    ragResults.length > 0
-      ? ragResults
-          .map((r) => `[Fuente: ${r.document.title} — ${r.document.url}]\n${r.content}`)
-          .join("\n\n---\n\n")
-      : "No se encontró contexto relevante en las fuentes verificadas.";
-  const sources = ragResults.map((r) => ({ url: r.document.url, title: r.document.title }));
-
-  const result = streamText({
-    model: createLLMProvider(),
-    system: buildSystemPrompt(contextText),
-    messages: await convertToModelMessages(messages),
-
-    onFinish: async () => {
-      await prisma.user.update({
-        where: { clerkId: userId },
-        data: { queriesUsed: { increment: 1 } },
-      });
-    },
-  });
+  const { contextText, sources } = formatContext(ragResults);
+  const history = toLangChainHistory(messages.filter((m) => m !== lastUserMessage));
+  const systemPrompt = buildSystemPrompt(contextText);
 
   const stream = createUIMessageStream({
-    execute: ({ writer }) => {
+    execute: async ({ writer }) => {
       for (const source of sources) {
         writer.write({
           type: "source-url",
@@ -77,7 +55,23 @@ export async function POST(req: Request) {
           title: source.title,
         });
       }
-      writer.merge(result.toUIMessageStream());
+
+      const id = "msg-text";
+      writer.write({ type: "text-start", id });
+      const llmStream = await buildRagChain().stream(
+        buildMessages({ system: systemPrompt, history, question: queryText }),
+      );
+      for await (const chunk of llmStream) {
+        if (chunk) writer.write({ type: "text-delta", id, delta: chunk });
+      }
+      writer.write({ type: "text-end", id });
+    },
+    onError: (error) => (error instanceof Error ? error.message : "Error generando la respuesta."),
+    onFinish: async () => {
+      await prisma.user.update({
+        where: { clerkId: userId },
+        data: { queriesUsed: { increment: 1 } },
+      });
     },
   });
 
