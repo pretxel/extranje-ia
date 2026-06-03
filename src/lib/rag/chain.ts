@@ -2,7 +2,7 @@ import { AIMessage, type BaseMessage, HumanMessage, SystemMessage } from "@langc
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import type { Runnable } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
-import type { UIMessage } from "ai";
+import { isTextUIPart, type UIMessage } from "ai";
 import type { RAGResult } from "./types";
 
 const NO_CONTEXT = "No se encontró contexto relevante en las fuentes verificadas.";
@@ -28,7 +28,7 @@ export function formatContext(ragResults: RAGResult[]): {
 
 export function extractMessageText(message: UIMessage): string {
   return message.parts
-    .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
+    .filter(isTextUIPart)
     .map((p) => p.text)
     .join("");
 }
@@ -39,6 +39,8 @@ export function toLangChainHistory(messages: UIMessage[]): BaseMessage[] {
     if (!text) return [];
     if (m.role === "user") return [new HumanMessage(text)];
     if (m.role === "assistant") return [new AIMessage(text)];
+    // Drop system-role (and any non-user/assistant) messages: the system prompt
+    // is supplied separately via buildMessages.
     return [];
   });
 }

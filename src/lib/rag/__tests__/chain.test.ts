@@ -1,9 +1,11 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { RunnableSequence } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
 import type { UIMessage } from "ai";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   buildMessages,
+  buildRagChain,
   createChatModel,
   extractMessageText,
   formatContext,
@@ -113,5 +115,11 @@ describe("createChatModel", () => {
     const model = createChatModel();
     expect(model.model).toBe("gpt-4o-mini");
     delete process.env.OPENAI_CHAT_MODEL;
+  });
+});
+
+describe("buildRagChain", () => {
+  it("returns a Runnable sequence", () => {
+    expect(buildRagChain()).toBeInstanceOf(RunnableSequence);
   });
 });
