@@ -34,7 +34,7 @@ export function extractMessageText(message: UIMessage): string {
 }
 
 export function toLangChainHistory(messages: UIMessage[]): BaseMessage[] {
-  return messages.flatMap((m) => {
+  return messages.flatMap<BaseMessage>((m) => {
     const text = extractMessageText(m);
     if (!text) return [];
     if (m.role === "user") return [new HumanMessage(text)];
