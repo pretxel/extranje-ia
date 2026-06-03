@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Auth | Clerk v6 |
 | Database | PostgreSQL + pgvector — Prisma 7 with `@prisma/adapter-pg` |
 | RAG | LangChain (`RecursiveCharacterTextSplitter`, `PGVectorStore`, `OpenAIEmbeddings`) |
-| LLM | GPT-4o via Vercel AI SDK v6 (`streamText`, `useChat`) |
+| LLM | GPT-4o — RAG chat via LangChain `ChatOpenAI` (`@langchain/openai`), streamed to `useChat` (Vercel AI SDK v6) |
 | Scraping | axios + cheerio (BOE Código de Extranjería index) |
 | Payments | Stripe v17 |
 | Linting | Biome (primary) + ESLint |
@@ -39,7 +39,7 @@ BOE biblioteca_juridica/codigos (Código de Extranjería index)
         v  src/lib/rag/retrieval.ts  (similaritySearchWithScore, cosine)
    Top-k chunks + document metadata from PostgreSQL
         |
-        v  src/app/api/chat/route.ts  (Vercel AI SDK streamText)
+        v  src/app/api/chat/route.ts  (LangChain ChatOpenAI chain → AI SDK UI message stream)
    GPT-4o response streamed with source-url parts
 ```
 
@@ -69,7 +69,10 @@ pnpm ingest             # run RAG ingestion pipeline
 - `src/lib/rag/vectorstore.ts` — `PGVectorStore.initialize()` using `rag_vectors` table (LangChain-managed)
 - `src/lib/rag/pipeline.ts` — ingestion: scrape → upsert document → chunk → `vectorStore.addDocuments()`
 - `src/lib/rag/retrieval.ts` — `similaritySearchWithScore()` + Prisma join for document metadata
-- `src/app/api/chat/route.ts` — plan limit check → RAG retrieval → `streamText` with `source-url` parts
+- `src/lib/rag/chain.ts` — `createChatModel()` (LangChain `ChatOpenAI`, temp 0), `buildRagChain()` (`model → StringOutputParser`), + `formatContext`/`toLangChainHistory`/`buildMessages` helpers
+- `src/app/api/chat/route.ts` — plan limit check → RAG retrieval → LangChain `ChatOpenAI` chain (`buildRagChain`) streamed as `source-url` + text parts
+- `src/app/api/agent/route.ts` — agentic chat (`AGENT_CHAT_ENABLED=true`); OpenAI-locked, ignores `AI_EMBEDDING_PROVIDER`; tool loop via `streamText({ tools, stopWhen: stepCountIs(5) })`
+- `src/lib/agent/{providers,tools,prompt}.ts` — agent-only OpenAI factories, tool definitions (`searchExtranjeriaCorpus`, `listRecentDocumentChanges`, `fetchDocumentDetail`), system prompt + URL allow-list filter
 - `src/components/chat/ChatInterface.tsx` — `useChat` with `DefaultChatTransport`
 - `src/lib/plans.ts` — `PLAN_LIMITS`, `hasReachedLimit()`
 - `src/lib/stripe.ts` — Stripe client + `STRIPE_PRICES` map

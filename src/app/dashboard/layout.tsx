@@ -2,6 +2,8 @@ import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const agentEnabled = process.env.AGENT_CHAT_ENABLED === "true";
+
   return (
     <div className="flex h-screen" style={{ background: "var(--bg)" }}>
       <aside
@@ -39,6 +41,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </svg>
             Chat
           </Link>
+
+          {agentEnabled && (
+            <Link
+              href="/dashboard/agent"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-white/5"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <svg
+                aria-hidden="true"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 0 0-3.09 3.09ZM18 9.75l-.398 1.394a2.25 2.25 0 0 1-1.547 1.547L14.25 12l1.805-.691A2.25 2.25 0 0 1 17.602 9.75 18 9.75Z"
+                />
+              </svg>
+              Agente
+            </Link>
+          )}
         </nav>
 
         <div className="p-4" style={{ borderTop: "1px solid var(--border)" }}>

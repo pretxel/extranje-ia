@@ -216,3 +216,8 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 .qodo
+
+# Claude Code tooling caches (installed skills/commands, plugin lockfile)
+.agents/
+.claude/
+skills-lock.json

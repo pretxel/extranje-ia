@@ -19,15 +19,18 @@ model User {
 }
 
 model Document {
-  id         String   @id @default(uuid())
-  url        String   @unique
-  title      String
-  source     String
-  content    String
-  scrapedAt  DateTime @default(now()) @map("scraped_at")
-  verifiedAt DateTime @default(now()) @map("verified_at")
-  chunks     Chunk[]
+  id          String   @id @default(uuid())
+  url         String   @unique
+  title       String
+  source      String
+  content     String
+  contentHash String?  @map("content_hash")
+  scrapedAt   DateTime @default(now()) @map("scraped_at")
+  verifiedAt  DateTime @default(now()) @map("verified_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  chunks      Chunk[]
 
+  @@index([updatedAt])
   @@map("documents")
 }
 

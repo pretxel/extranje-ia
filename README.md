@@ -139,6 +139,38 @@ prisma/
   migrations/        # SQL migration files
 ```
 
+## Agent chat (experimental)
+
+A second conversational surface, `/dashboard/agent` backed by `POST /api/agent`, runs
+GPT-4o in a tool-calling loop instead of single-shot RAG. Tools available to the agent:
+
+- `searchExtranjeriaCorpus` — wraps the existing similarity search.
+- `listRecentDocumentChanges` — surfaces documents whose content changed in the last *N* days
+  (powered by `Document.updatedAt` + `contentHash` from the change-tracking ingest).
+- `fetchDocumentDetail` — returns full metadata for a single document for citation.
+
+The route is OpenAI-locked and ignores `AI_EMBEDDING_PROVIDER`.
+
+```bash
+# Required env vars
+AGENT_CHAT_ENABLED=true
+OPENAI_API_KEY=sk-...
+# Optional overrides
+OPENAI_AGENT_MODEL=gpt-4o
+OPENAI_AGENT_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+```bash
+# Smoke test (replace COOKIE with a Clerk session cookie)
+curl -N -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -H "Cookie: __session=$COOKIE" \
+  -d '{"messages":[{"role":"user","parts":[{"type":"text","text":"¿qué documentación ha cambiado en los últimos 30 días?"}]}]}'
+```
+
+Plan limits are shared with `/api/chat`: one user turn = +1 to `queriesUsed`, regardless of
+how many tool calls the agent made.
+
 ## Pricing
 
 | Plan | Price | Queries |
