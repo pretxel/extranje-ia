@@ -7,15 +7,12 @@ vi.mock("@clerk/nextjs/server", () => ({
   currentUser: vi.fn().mockResolvedValue(null),
 }));
 
-// --- AI SDK mocks ---
+// --- AI SDK UI-stream mocks ---
 vi.mock("ai", () => ({
-  streamText: vi.fn().mockReturnValue({
-    toUIMessageStream: vi.fn().mockReturnValue(new ReadableStream()),
-  }),
-  convertToModelMessages: vi.fn().mockResolvedValue([]),
   createUIMessageStream: vi.fn().mockImplementation(({ execute }) => {
-    const writer = { write: vi.fn(), merge: vi.fn() };
-    execute({ writer });
+    const writer = { write: vi.fn() };
+    // Run the bridge but never let an async rejection escape the test.
+    Promise.resolve(execute({ writer })).catch(() => {});
     return new ReadableStream();
   }),
   createUIMessageStreamResponse: vi.fn().mockImplementation(({ stream }) => {
@@ -25,8 +22,26 @@ vi.mock("ai", () => ({
   }),
 }));
 
-vi.mock("@ai-sdk/openai", () => ({
-  openai: vi.fn().mockReturnValue("mocked-model"),
+// --- RAG retrieval + LangChain chain mocks (no real ChatOpenAI / network) ---
+vi.mock("@/lib/rag", () => ({
+  findRelevantChunks: vi.fn().mockResolvedValue([]),
+}));
+
+const buildRagChain = vi.hoisted(() =>
+  vi.fn().mockReturnValue({
+    stream: vi.fn().mockImplementation(async () =>
+      (async function* () {
+        yield "Hola";
+      })(),
+    ),
+  }),
+);
+vi.mock("@/lib/rag/chain", () => ({
+  formatContext: vi.fn().mockReturnValue({ contextText: "ctx", sources: [] }),
+  extractMessageText: vi.fn().mockReturnValue("query"),
+  toLangChainHistory: vi.fn().mockReturnValue([]),
+  buildMessages: vi.fn().mockReturnValue([]),
+  buildRagChain,
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -65,6 +80,7 @@ function makeRequest(body: Record<string, unknown> = { messages: [] }) {
 describe("POST /api/chat", () => {
   beforeEach(() => {
     mockAuth.mockReset();
+    buildRagChain.mockClear();
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -83,5 +99,15 @@ describe("POST /api/chat", () => {
     mockAuth.mockResolvedValue({ userId: "user_123" });
     const res = await POST(makeRequest());
     expect(res.headers.get("Content-Type")).toBe("text/event-stream");
+  });
+
+  it("builds the LangChain RAG chain when authenticated", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" });
+    await POST(
+      makeRequest({
+        messages: [{ id: "1", role: "user", parts: [{ type: "text", text: "hola" }] }],
+      }),
+    );
+    expect(buildRagChain).toHaveBeenCalled();
   });
 });
