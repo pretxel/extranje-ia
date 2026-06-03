@@ -33,8 +33,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.71",
-    "@ai-sdk/google": "^3.0.60",
     "@ai-sdk/openai": "^3.0.0",
     "@ai-sdk/react": "^3.0.0",
     "@clerk/nextjs": "^6.0.0",
