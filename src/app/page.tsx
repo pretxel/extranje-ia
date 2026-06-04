@@ -1,9 +1,14 @@
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import UpgradeButton from "@/components/UpgradeButton";
+import { createClient } from "@/lib/auth/server";
 
 /* ─── Nav ────────────────────────────────────────────────────────────────── */
-function Nav() {
+async function Nav() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-4"
@@ -23,27 +28,27 @@ function Nav() {
         <a href="#precios" className="hidden md:block hover:text-white transition-colors">
           Precios
         </a>
-        <SignedIn>
+        {user ? (
           <Link
             href="/dashboard/chat"
             className="hidden md:block hover:text-white transition-colors"
           >
             Mi cuenta
           </Link>
-          <UserButton />
-        </SignedIn>
-        <SignedOut>
-          <Link href="/sign-in" className="hover:text-white transition-colors">
-            Entrar
-          </Link>
-          <Link
-            href="/sign-up"
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm transition-all hover:opacity-90 pulse-glow"
-            style={{ background: "var(--accent)" }}
-          >
-            Empezar gratis
-          </Link>
-        </SignedOut>
+        ) : (
+          <>
+            <Link href="/sign-in" className="hover:text-white transition-colors">
+              Entrar
+            </Link>
+            <Link
+              href="/sign-up"
+              className="px-4 py-2 rounded-lg text-white font-medium text-sm transition-all hover:opacity-90 pulse-glow"
+              style={{ background: "var(--accent)" }}
+            >
+              Empezar gratis
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );

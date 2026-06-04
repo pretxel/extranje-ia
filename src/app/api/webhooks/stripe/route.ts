@@ -21,11 +21,12 @@ export async function POST(req: Request) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
-      const clerkUserId = session.metadata?.clerkUserId;
+      // Checkout sets client_reference_id to the Supabase user id.
+      const supabaseUserId = session.client_reference_id ?? session.metadata?.supabaseUserId;
       const plan = session.metadata?.plan;
-      if (clerkUserId && plan) {
+      if (supabaseUserId && plan) {
         await prisma.user.updateMany({
-          where: { clerkId: clerkUserId },
+          where: { supabaseId: supabaseUserId },
           data: { plan },
         });
       }
@@ -34,10 +35,10 @@ export async function POST(req: Request) {
 
     case "customer.subscription.deleted": {
       const subscription = event.data.object;
-      const clerkUserId = subscription.metadata?.clerkUserId;
-      if (clerkUserId) {
+      const supabaseUserId = subscription.metadata?.supabaseUserId;
+      if (supabaseUserId) {
         await prisma.user.updateMany({
-          where: { clerkId: clerkUserId },
+          where: { supabaseId: supabaseUserId },
           data: { plan: "free" },
         });
       }
@@ -46,11 +47,11 @@ export async function POST(req: Request) {
 
     case "customer.subscription.updated": {
       const subscription = event.data.object;
-      const clerkUserId = subscription.metadata?.clerkUserId;
+      const supabaseUserId = subscription.metadata?.supabaseUserId;
       const plan = subscription.metadata?.plan;
-      if (clerkUserId && plan) {
+      if (supabaseUserId && plan) {
         await prisma.user.updateMany({
-          where: { clerkId: clerkUserId },
+          where: { supabaseId: supabaseUserId },
           data: { plan },
         });
       }

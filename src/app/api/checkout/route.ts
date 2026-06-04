@@ -1,25 +1,14 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/db";
+import { getOrCreateUser } from "@/lib/auth/user";
 import { STRIPE_PRICES, stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const user = await getOrCreateUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   const { plan }: { plan: "pro" } = await req.json();
 
   if (!plan || !(plan in STRIPE_PRICES)) {
     return new Response("Invalid plan", { status: 400 });
-  }
-
-  // Look up or create user in DB
-  let user = await prisma.user.findUnique({ where: { clerkId: userId } });
-  if (!user) {
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@pending.local`;
-    user = await prisma.user.create({
-      data: { clerkId: userId, email, plan: "free", queriesUsed: 0 },
-    });
   }
 
   let paymentLink: Awaited<ReturnType<typeof stripe.paymentLinks.create>>;
@@ -39,7 +28,7 @@ export async function POST(req: Request) {
 
   const url = new URL(paymentLink.url);
   url.searchParams.set("prefilled_email", user.email);
-  url.searchParams.set("client_reference_id", userId);
+  url.searchParams.set("client_reference_id", user.supabaseId);
 
   return Response.json({ url: url.toString() });
 }

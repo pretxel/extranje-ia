@@ -12,6 +12,10 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: process.env.DATABASE_URL,
+    // Migrations must use a DIRECT (non-pooled) connection. On Supabase the
+    // runtime uses the pgBouncer pooler (DATABASE_URL, port 6543) while the CLI
+    // migrate engine needs the direct connection (DIRECT_URL, port 5432).
+    // Falls back to DATABASE_URL when DIRECT_URL is unset (single-DB dev).
+    url: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
   },
 })

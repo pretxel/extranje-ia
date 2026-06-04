@@ -1,4 +1,3 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -10,6 +9,7 @@ import {
 import { buildAgentSystemPrompt } from "@/lib/agent/prompt";
 import { agentChatModel } from "@/lib/agent/providers";
 import { buildAgentTools } from "@/lib/agent/tools";
+import { getOrCreateUser } from "@/lib/auth/user";
 import { prisma } from "@/lib/db";
 import type { Plan } from "@/lib/plans";
 import { hasReachedLimit } from "@/lib/plans";
@@ -19,17 +19,8 @@ export async function POST(req: Request) {
     return new Response("Not Found", { status: 404 });
   }
 
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
-
-  let user = await prisma.user.findUnique({ where: { clerkId: userId } });
-  if (!user) {
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@pending.local`;
-    user = await prisma.user.create({
-      data: { clerkId: userId, email, plan: "free", queriesUsed: 0 },
-    });
-  }
+  const user = await getOrCreateUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   if (hasReachedLimit(user.plan as Plan, user.queriesUsed)) {
     return new Response(JSON.stringify({ error: "limit_reached", plan: user.plan }), {
@@ -68,7 +59,7 @@ export async function POST(req: Request) {
 
         onFinish: async () => {
           await prisma.user.update({
-            where: { clerkId: userId },
+            where: { id: user.id },
             data: { queriesUsed: { increment: 1 } },
           });
         },
