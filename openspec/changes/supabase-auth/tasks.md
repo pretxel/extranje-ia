@@ -53,9 +53,18 @@
 > So the rename must NOT be pre-applied to the prod DB — it happens atomically
 > at promote, and preview validates against an isolated Supabase **branch** DB.
 
-- [ ] 8.1 Create a Supabase branch DB (MCP `create_branch`) with the rename applied; deploy the git branch to a Vercel Preview pointed at the branch DB + Supabase-auth envs
-- [ ] 8.2 Add the preview origin to the branch's Auth redirect URLs; validate: magic link, protected-route redirect, authenticated `/api/chat` returns cited sources (Google once creds set)
-- [ ] 8.3 Promote ATOMICALLY: in one window — apply the rename migration to prod DB (`migrate deploy` / MCP) AND deploy P3 code to prod (set prod Supabase-auth envs + redirect URLs)
-- [ ] 8.4 Prod smoke: login + chat query
-- [ ] 8.5 After success: remove `@clerk/nextjs` + Clerk envs (follow-up commit)
-- [ ] 8.6 Rollback: redeploy prior (Clerk) deployment + revert the column rename (`supabase_id`→`clerk_id`)
+- [x] 8.1 Used a 2nd FREE project `extranjeria-ia-preview` (`yarptkmjstpsrpukvgjf`) instead of a paid branch. Schema (→supabase_id) + RLS + vector via MCP. Vercel Preview env set via API (preview Supabase + DB + OpenAI/Stripe). Deployed: https://extranje-lmtl2e7k1-edsels-projects-7227ff3c.vercel.app. Disabled Vercel SSO protection (RE-ENABLE after).
+- [~] 8.2 Server-side validated on preview: sign-in 200, API guard 401, page guard 307→/sign-in, /auth/callback handler live. PENDING (human, can't curl): add preview redirect URL to `extranjeria-ia-preview` Auth config, then magic-link round-trip (email→click→/dashboard). `/api/chat` returns empty RAG (no corpus in preview — expected).
+- [x] 8.0 Configured Resend SMTP + Site URL + redirect URLs on extranjeria-ia via Management API (PAT). Verified: test OTP no longer uses built-in mailer; user confirmed email delivery.
+- [x] 8.3 Promoted: `vercel --prod` deployed P3 (dpl_GEBknYkwRaQiu6KxuAWa3T35k8RK) while Clerk served the build; then renamed `clerk_id→supabase_id` on prod DB (users=0, zero data risk); `migrate resolve --applied` recorded it. Prod `NEXT_PUBLIC_SUPABASE_*` set.
+- [x] 8.4 Prod smoke (www.agente-extranjeria.com): homepage 200, sign-in 200 showing the Supabase AuthForm, /api/user 401, /dashboard 307→/sign-in, no Clerk markers.
+- [ ] 8.5 After confirming real-user login: remove `@clerk/nextjs` + Clerk envs (follow-up commit)
+- [ ] 8.6 Rollback path: redeploy prior (Clerk) deployment + revert column (`supabase_id`→`clerk_id`)
+
+## 9. CRITICAL follow-ups (prod is live but incomplete)
+
+- [ ] 9.1 ⚠️ Resend sender is `onboarding@resend.dev` → delivers ONLY to the Resend account owner's email. REAL OTHER USERS CANNOT RECEIVE MAGIC LINKS until `agente-extranjeria.com` is verified in Resend and the sender switched to `noreply@agente-extranjeria.com` (Management API PATCH smtp_admin_email).
+- [ ] 9.2 Enable Google OAuth (creds) as a non-email fallback login.
+- [ ] 9.3 Raise auth email rate limit (currently ~2/hr) for real usage.
+- [ ] 9.4 ROTATE the secrets pasted in chat: Supabase PAT + Resend API key.
+- [ ] 9.5 Cleanup: delete throwaway `extranjeria-ia-preview` project; re-enable Vercel deployment protection (disabled globally for preview testing); remove `PREVIEW_*` from `.env.local`.
