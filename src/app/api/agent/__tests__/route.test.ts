@@ -1,21 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockAuth = vi.hoisted(() => vi.fn());
+const mockGetOrCreateUser = vi.hoisted(() => vi.fn());
 const mockUserUpdate = vi.hoisted(() => vi.fn());
-const mockUserFindUnique = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({
-    clerkId: "user_123",
-    email: "test@test.com",
-    plan: "free",
-    queriesUsed: 0,
-  }),
-);
 const mockHasReachedLimit = vi.hoisted(() => vi.fn().mockReturnValue(false));
 const writerWriteCalls = vi.hoisted(() => [] as Array<Record<string, unknown>>);
 
-vi.mock("@clerk/nextjs/server", () => ({
-  auth: mockAuth,
-  currentUser: vi.fn().mockResolvedValue(null),
+const authedUser = {
+  id: "u_1",
+  supabaseId: "sb_123",
+  email: "test@test.com",
+  plan: "free",
+  queriesUsed: 0,
+};
+
+vi.mock("@/lib/auth/user", () => ({
+  getOrCreateUser: mockGetOrCreateUser,
 }));
 
 vi.mock("ai", () => ({
@@ -54,8 +53,6 @@ vi.mock("@/lib/agent/tools", () => ({
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: {
-      findUnique: mockUserFindUnique,
-      create: vi.fn(),
       update: mockUserUpdate,
     },
   },
@@ -77,7 +74,8 @@ function makeRequest(body: Record<string, unknown> = { messages: [] }) {
 
 describe("POST /api/agent", () => {
   beforeEach(() => {
-    mockAuth.mockReset();
+    mockGetOrCreateUser.mockReset();
+    mockGetOrCreateUser.mockResolvedValue(authedUser);
     mockUserUpdate.mockReset();
     mockHasReachedLimit.mockReturnValue(false);
     writerWriteCalls.length = 0;
@@ -96,13 +94,12 @@ describe("POST /api/agent", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockAuth.mockResolvedValue({ userId: null });
+    mockGetOrCreateUser.mockResolvedValue(null);
     const res = await POST(makeRequest());
     expect(res.status).toBe(401);
   });
 
   it("returns 402 when user is over plan limit", async () => {
-    mockAuth.mockResolvedValue({ userId: "user_123" });
     mockHasReachedLimit.mockReturnValue(true);
     const res = await POST(makeRequest());
     expect(res.status).toBe(402);
@@ -111,7 +108,6 @@ describe("POST /api/agent", () => {
   });
 
   it("streams a 200 response and emits a source-url for tool URLs", async () => {
-    mockAuth.mockResolvedValue({ userId: "user_123" });
     const res = await POST(makeRequest());
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("text/event-stream");

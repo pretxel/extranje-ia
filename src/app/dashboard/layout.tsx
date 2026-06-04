@@ -1,5 +1,5 @@
-import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const agentEnabled = process.env.AGENT_CHAT_ENABLED === "true";
@@ -68,11 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         <div className="p-4" style={{ borderTop: "1px solid var(--border)" }}>
-          <UserButton
-            appearance={{
-              elements: { userButtonAvatarBox: { width: 32, height: 32 } },
-            }}
-          />
+          <SignOutButton />
         </div>
       </aside>
 

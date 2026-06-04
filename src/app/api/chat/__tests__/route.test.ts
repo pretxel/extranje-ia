@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// --- Clerk mock ---
-const mockAuth = vi.hoisted(() => vi.fn());
-vi.mock("@clerk/nextjs/server", () => ({
-  auth: mockAuth,
-  currentUser: vi.fn().mockResolvedValue(null),
+// --- Auth mock (Supabase identity via getOrCreateUser helper) ---
+const mockGetOrCreateUser = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/auth/user", () => ({
+  getOrCreateUser: mockGetOrCreateUser,
 }));
+
+const authedUser = {
+  id: "u_1",
+  supabaseId: "sb_123",
+  email: "test@test.com",
+  plan: "free",
+  queriesUsed: 0,
+};
 
 // --- AI SDK UI-stream mocks ---
 const streamWriter = vi.hoisted(() => ({ write: vi.fn() }));
@@ -47,13 +54,6 @@ vi.mock("@/lib/rag/chain", () => ({
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: {
-      findUnique: vi.fn().mockResolvedValue({
-        clerkId: "user_123",
-        email: "test@test.com",
-        plan: "free",
-        queriesUsed: 0,
-      }),
-      create: vi.fn(),
       update: vi.fn(),
     },
   },
@@ -79,31 +79,31 @@ function makeRequest(body: Record<string, unknown> = { messages: [] }) {
 
 describe("POST /api/chat", () => {
   beforeEach(() => {
-    mockAuth.mockReset();
+    mockGetOrCreateUser.mockReset();
     buildRagChain.mockClear();
     streamWriter.write.mockClear();
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockAuth.mockResolvedValue({ userId: null });
+    mockGetOrCreateUser.mockResolvedValue(null);
     const res = await POST(makeRequest());
     expect(res.status).toBe(401);
   });
 
   it("returns a streaming response when authenticated", async () => {
-    mockAuth.mockResolvedValue({ userId: "user_123" });
+    mockGetOrCreateUser.mockResolvedValue(authedUser);
     const res = await POST(makeRequest());
     expect(res.status).toBe(200);
   });
 
   it("response has Content-Type: text/event-stream", async () => {
-    mockAuth.mockResolvedValue({ userId: "user_123" });
+    mockGetOrCreateUser.mockResolvedValue(authedUser);
     const res = await POST(makeRequest());
     expect(res.headers.get("Content-Type")).toBe("text/event-stream");
   });
 
   it("opens the text stream and builds the LangChain chain when authenticated", async () => {
-    mockAuth.mockResolvedValue({ userId: "user_123" });
+    mockGetOrCreateUser.mockResolvedValue(authedUser);
     await POST(
       makeRequest({
         messages: [{ id: "1", role: "user", parts: [{ type: "text", text: "hola" }] }],
