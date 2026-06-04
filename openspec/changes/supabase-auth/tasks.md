@@ -37,7 +37,7 @@
 ## 6. Data model
 
 - [x] 6.1 `prisma/schema.prisma` — `User.clerkId` → `User.supabaseId @map("supabase_id")`
-- [x] 6.2 Applied rename to Supabase via MCP (RENAME COLUMN + index) — NOT `migrate dev` (would reset/drop rag_vectors); hand-written migration + `migrate resolve --applied`; `db:generate`
+- [~] 6.2 Migration written (`20260604180000_rename_clerk_to_supabase`, RENAME COLUMN+index — NOT `migrate dev`, which would reset/drop rag_vectors). Applied then REVERTED: prod shares this DB with the still-live Clerk deploy (needs `clerk_id`), so a pre-cutover rename broke prod. Column restored to `clerk_id`; migration record deleted so it re-applies AT cutover. `db:generate` done (client has `supabaseId`).
 - [x] 6.3 Find-or-create keys on `supabaseId` (centralized in `getOrCreateUser`)
 
 ## 7. Tests
@@ -48,9 +48,14 @@
 
 ## 8. Cutover (Preview → promote)
 
-- [ ] 8.1 Deploy branch to Vercel Preview with Supabase-auth envs; add preview origin to Supabase redirect URLs
-- [ ] 8.2 Validate on preview: magic link, (Google once creds set), protected-route redirect, authenticated `/api/chat` returns cited sources
-- [ ] 8.3 Promote to prod: set prod Supabase-auth envs + prod redirect URLs; deploy
+> SHARED-DB CONSTRAINT: prod + this branch use the same Supabase DB, and the
+> `clerk_id`→`supabase_id` rename is incompatible with the live Clerk code.
+> So the rename must NOT be pre-applied to the prod DB — it happens atomically
+> at promote, and preview validates against an isolated Supabase **branch** DB.
+
+- [ ] 8.1 Create a Supabase branch DB (MCP `create_branch`) with the rename applied; deploy the git branch to a Vercel Preview pointed at the branch DB + Supabase-auth envs
+- [ ] 8.2 Add the preview origin to the branch's Auth redirect URLs; validate: magic link, protected-route redirect, authenticated `/api/chat` returns cited sources (Google once creds set)
+- [ ] 8.3 Promote ATOMICALLY: in one window — apply the rename migration to prod DB (`migrate deploy` / MCP) AND deploy P3 code to prod (set prod Supabase-auth envs + redirect URLs)
 - [ ] 8.4 Prod smoke: login + chat query
 - [ ] 8.5 After success: remove `@clerk/nextjs` + Clerk envs (follow-up commit)
-- [ ] 8.6 Rollback path: redeploy prior (Clerk) deployment
+- [ ] 8.6 Rollback: redeploy prior (Clerk) deployment + revert the column rename (`supabase_id`→`clerk_id`)
