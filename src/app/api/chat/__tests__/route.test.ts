@@ -59,6 +59,13 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+const resolveConversationId = vi.hoisted(() => vi.fn().mockResolvedValue("conv_1"));
+const persistTurn = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock("@/lib/chat/persistence", () => ({
+  resolveConversationId,
+  persistTurn,
+}));
+
 vi.mock("@/lib/plans", () => ({
   hasReachedLimit: vi.fn().mockReturnValue(false),
 }));
@@ -82,6 +89,8 @@ describe("POST /api/chat", () => {
     mockGetOrCreateUser.mockReset();
     buildRagChain.mockClear();
     streamWriter.write.mockClear();
+    resolveConversationId.mockClear();
+    persistTurn.mockClear();
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -111,5 +120,36 @@ describe("POST /api/chat", () => {
     );
     expect(buildRagChain).toHaveBeenCalled();
     expect(streamWriter.write).toHaveBeenCalledWith({ type: "text-start", id: "msg-text" });
+  });
+
+  it("binds the conversation via a transient data part", async () => {
+    mockGetOrCreateUser.mockResolvedValue(authedUser);
+    await POST(
+      makeRequest({
+        messages: [{ id: "1", role: "user", parts: [{ type: "text", text: "hola" }] }],
+      }),
+    );
+    expect(resolveConversationId).toHaveBeenCalledWith({
+      userId: authedUser.id,
+      conversationId: undefined,
+    });
+    expect(streamWriter.write).toHaveBeenCalledWith({
+      type: "data-conversation",
+      data: { id: "conv_1" },
+      transient: true,
+    });
+  });
+
+  it("does not emit source-url parts", async () => {
+    mockGetOrCreateUser.mockResolvedValue(authedUser);
+    await POST(
+      makeRequest({
+        messages: [{ id: "1", role: "user", parts: [{ type: "text", text: "hola" }] }],
+      }),
+    );
+    const wroteSource = streamWriter.write.mock.calls.some(
+      ([part]) => (part as { type?: string }).type === "source-url",
+    );
+    expect(wroteSource).toBe(false);
   });
 });
