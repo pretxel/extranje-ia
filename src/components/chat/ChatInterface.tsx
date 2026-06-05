@@ -161,7 +161,7 @@ export default function ChatInterface() {
         </div>
       )}
 
-      <ChatInput onSend={handleSend} isLoading={isLoading || Boolean(showLimit)} />
+      <ChatInput onSend={handleSend} isLoading={isLoading} disabled={Boolean(showLimit)} />
     </div>
   );
 }
