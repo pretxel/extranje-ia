@@ -1,24 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { UserPlan } from "@/lib/chat-types";
 
-interface UserData {
+export interface UsageData {
   plan: UserPlan;
   queriesUsed: number;
   queriesLimit: number;
 }
 
-export default function UsageBanner() {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(false);
+interface UsageBannerProps {
+  userData: UsageData | null;
+}
 
-  useEffect(() => {
-    fetch("/api/user")
-      .then((res) => res.json())
-      .then((data: UserData) => setUserData(data))
-      .catch(() => {});
-  }, []);
+export default function UsageBanner({ userData }: UsageBannerProps) {
+  const [loading, setLoading] = useState(false);
 
   async function handleUpgrade() {
     setLoading(true);

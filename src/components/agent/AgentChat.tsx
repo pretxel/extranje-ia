@@ -5,11 +5,14 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useRef } from "react";
 import ChatInput from "@/components/chat/ChatInput";
 import UsageBanner from "@/components/chat/UsageBanner";
+import { useUsage } from "@/components/chat/useUsage";
 import AgentMessageBubble from "./AgentMessageBubble";
 
 export default function AgentChat() {
+  const { usage, refetch: refetchUsage } = useUsage();
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/agent" }),
+    onFinish: () => refetchUsage(),
   });
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -29,7 +32,7 @@ export default function AgentChat() {
 
   return (
     <div className="flex flex-col h-full">
-      <UsageBanner />
+      <UsageBanner userData={usage} />
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
         {messages.length === 0 && (

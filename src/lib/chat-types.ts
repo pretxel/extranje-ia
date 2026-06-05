@@ -17,8 +17,5 @@ export interface SourceCitation {
 
 export type UserPlan = "free" | "pro";
 
-export const PLAN_LIMITS: Record<UserPlan, number> = {
-  free: 5,
-  pro: Infinity,
-  // empresa: Infinity,
-};
+// Plan query limits live solely in `src/lib/plans.ts` (the canonical source).
+// Import { PLAN_LIMITS, getLimit, hasReachedLimit } from "@/lib/plans".

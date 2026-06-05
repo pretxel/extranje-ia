@@ -1,5 +1,4 @@
 import type { UIMessage } from "ai";
-import SourceCard from "./SourceCard";
 
 interface MessageBubbleProps {
   message: UIMessage;
@@ -9,7 +8,6 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
   const textParts = message.parts.filter((p) => p.type === "text");
-  const sourceParts = message.parts.filter((p) => p.type === "source-url");
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -25,15 +23,6 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             {part.text}
           </p>
         ))}
-
-        {sourceParts.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">Fuentes</p>
-            {sourceParts.map((part) => (
-              <SourceCard key={part.url} url={part.url} title={part.title} />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
