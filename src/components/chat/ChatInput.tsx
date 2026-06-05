@@ -4,10 +4,13 @@ import { useCallback, useRef, useState } from "react";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
+  /** A request is streaming — show the spinner. */
   isLoading: boolean;
+  /** Sending is blocked (e.g. at the plan limit) — disable, but NOT a spinner. */
+  disabled?: boolean;
 }
 
-export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export default function ChatInput({ onSend, isLoading, disabled = false }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -28,14 +31,14 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || disabled) return;
     onSend(trimmed);
     setValue("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.overflowY = "hidden";
     }
-  }, [value, isLoading, onSend]);
+  }, [value, isLoading, disabled, onSend]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -44,7 +47,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
     }
   };
 
-  const canSend = !isLoading && value.trim().length > 0;
+  const canSend = !isLoading && !disabled && value.trim().length > 0;
 
   return (
     <div className="border-t border-gray-200 bg-white px-4 py-3">
@@ -58,7 +61,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           placeholder="Escribe tu consulta sobre NIE, TIE, visados..."
           className="flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none overflow-hidden"
           style={{ overflowY: "hidden" }}
-          disabled={isLoading}
+          disabled={isLoading || disabled}
         />
         <button
           type="button"

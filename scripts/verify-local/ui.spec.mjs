@@ -76,6 +76,10 @@ test("at-limit shows the amber limit banner and disables the input", async ({ pa
   await expect(page.getByText(/Has agotado tus 5 consultas gratuitas/)).toBeVisible(); // UsageBanner at-limit
   await expect(page.getByText(/Actualiza a Pro para seguir consultando/)).toBeVisible(); // ChatInterface limit strip
   await expect(page.getByPlaceholder(/Escribe tu consulta/)).toBeDisabled(); // input guarded at limit
+  // Regression guard (#6): at the limit the send button is disabled but must
+  // NOT show the streaming spinner — blocked != loading.
+  await expect(page.locator('button[aria-label="Enviar mensaje"]')).toBeDisabled();
+  await expect(page.locator('button[aria-label="Enviar mensaje"] svg.animate-spin')).toHaveCount(0);
 
   await page.screenshot({ path: "scripts/verify-local/shot-limit.png", fullPage: true });
 });
