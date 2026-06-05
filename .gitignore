@@ -221,3 +221,8 @@ dist
 .agents/
 .claude/
 skills-lock.json
+
+# Local verification harness — generated artifacts
+/test-results
+/playwright-report
+scripts/verify-local/*.png
