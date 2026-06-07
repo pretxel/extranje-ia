@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { paidPlansEnabled } from "@/lib/plans";
 
 interface UpgradeButtonProps {
   plan: "pro" | "empresa";
@@ -10,8 +11,10 @@ interface UpgradeButtonProps {
 
 export default function UpgradeButton({ plan, label, highlight }: UpgradeButtonProps) {
   const [loading, setLoading] = useState(false);
+  const paidEnabled = paidPlansEnabled();
 
   async function handleClick() {
+    if (!paidEnabled) return;
     setLoading(true);
     try {
       const res = await fetch("/api/checkout", {
@@ -35,6 +38,24 @@ export default function UpgradeButton({ plan, label, highlight }: UpgradeButtonP
       console.error("[UpgradeButton] unexpected error:", err);
       setLoading(false);
     }
+  }
+
+  if (!paidEnabled) {
+    return (
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        className="block w-full text-center py-3 rounded-xl font-semibold text-sm mb-8 cursor-not-allowed opacity-60"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          color: "var(--text-muted)",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+      >
+        Próximamente
+      </button>
+    );
   }
 
   return (

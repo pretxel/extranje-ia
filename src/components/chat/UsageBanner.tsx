@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { UserPlan } from "@/lib/chat-types";
+import { paidPlansEnabled } from "@/lib/plans";
 
 export interface UsageData {
   plan: UserPlan;
@@ -15,8 +16,10 @@ interface UsageBannerProps {
 
 export default function UsageBanner({ userData }: UsageBannerProps) {
   const [loading, setLoading] = useState(false);
+  const paidEnabled = paidPlansEnabled();
 
   async function handleUpgrade() {
+    if (!paidEnabled) return;
     setLoading(true);
     try {
       const res = await fetch("/api/checkout", {
@@ -54,15 +57,31 @@ export default function UsageBanner({ userData }: UsageBannerProps) {
           </>
         )}
       </span>
-      <button
-        type="button"
-        onClick={handleUpgrade}
-        disabled={loading}
-        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90 disabled:opacity-50"
-        style={{ background: "var(--accent)", color: "white" }}
-      >
-        {loading ? "Redirigiendo..." : "Actualizar a Pro →"}
-      </button>
+      {paidEnabled ? (
+        <button
+          type="button"
+          onClick={handleUpgrade}
+          disabled={loading}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90 disabled:opacity-50"
+          style={{ background: "var(--accent)", color: "white" }}
+        >
+          {loading ? "Redirigiendo..." : "Actualizar a Pro →"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg cursor-not-allowed opacity-60"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            color: "var(--text-muted)",
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
+        >
+          Próximamente
+        </button>
+      )}
     </div>
   );
 }
