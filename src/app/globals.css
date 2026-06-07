@@ -9,8 +9,16 @@
   --accent: #ff6b35;
   --accent-warm: #f5a623;
   --text: #f0ece4;
-  --text-muted: #6b7490;
+  --text-muted: #7e87a0;
   --border: rgba(255, 255, 255, 0.06);
+  /* Chat surface tokens (derived from the brand palette) */
+  --chat-assistant-bg: var(--surface-2);
+  --chat-user-grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-warm) 100%);
+  --chat-user-ink: #1b1206;
+  --chat-ring: rgba(255, 107, 53, 0.35);
+  --danger: #ff5d73;
+  --danger-bg: rgba(255, 93, 115, 0.08);
+  --danger-border: rgba(255, 93, 115, 0.22);
 }
 
 html {
@@ -182,4 +190,70 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
+}
+
+/* ── Chat surface ─────────────────────────────────────────── */
+
+/* Message entrance — lighter/faster than the page-level fade-up */
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.msg-in {
+  animation: msgIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Branded typing indicator */
+@keyframes typingBounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Composer focus glow */
+.composer-focus:focus-within {
+  border-color: var(--chat-ring);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.12);
+}
+
+/* Respect reduced-motion: kill decorative animation/transitions everywhere */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: must override decorative animation utilities */
+    animation-duration: 0.001ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must override decorative animation utilities */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must override decorative transition utilities */
+    transition-duration: 0.001ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: accessibility override */
+    scroll-behavior: auto !important;
+  }
 }
