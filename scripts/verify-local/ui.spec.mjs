@@ -43,7 +43,7 @@ async function authenticate(context) {
   );
 }
 
-test("authenticated chat renders a streamed answer with no Fuentes block + live counter", async ({
+test("redesigned chat: empty-state prompts send, branded answer, no Fuentes, copy, live counter", async ({
   page,
   context,
 }) => {
@@ -55,15 +55,24 @@ test("authenticated chat renders a streamed answer with no Fuentes block + live 
 
   await expect(page.getByText(/Has usado/)).toBeVisible(); // counter banner present (0 of 5)
 
-  await page.getByPlaceholder(/Escribe tu consulta/).fill("¿Qué es el NIE?");
-  await page.keyboard.press("Enter");
+  // Branded empty state with suggested prompts; clicking one sends the first turn.
+  await expect(page.getByRole("heading", { name: /En qué te puedo ayudar/ })).toBeVisible();
+  const chips = page.locator("button", { hasText: /NIE|TIE|arraigo|residencia/ });
+  await expect(chips.first()).toBeVisible();
+  await page.screenshot({ path: "scripts/verify-local/shot-empty.png", fullPage: true });
+  await chips.first().click();
 
-  // Assistant bubble fills with streamed text (real gpt-4o).
-  const assistantBubble = page.locator("div.bg-gray-100.text-gray-900").last();
+  // Branded assistant bubble (testid + editorial byline) fills with streamed text.
+  const assistantBubble = page.getByTestId("assistant-message").last();
   await expect(assistantBubble).toContainText(/\S/, { timeout: 40000 });
+  await expect(assistantBubble.getByText("Extranjería")).toBeVisible(); // editorial byline
 
-  await expect(page.getByText("Fuentes")).toHaveCount(0); // the whole point of the change
+  await expect(page.getByText("Fuentes")).toHaveCount(0); // no sources block
   await expect(page.getByText(/Has usado\s*1\s*de\s*5/)).toBeVisible({ timeout: 10000 }); // counter moved live
+
+  // Copy control on the assistant message works.
+  await assistantBubble.getByRole("button", { name: /Copiar respuesta/ }).click();
+  await expect(assistantBubble.getByText("Copiado")).toBeVisible();
 
   await page.screenshot({ path: "scripts/verify-local/shot-chat.png", fullPage: true });
 });

@@ -50,24 +50,31 @@ export default function ChatInput({ onSend, isLoading, disabled = false }: ChatI
   const canSend = !isLoading && !disabled && value.trim().length > 0;
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
-      <div className="flex items-end gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+    <div
+      className="px-4 py-3"
+      style={{ borderTop: "1px solid var(--border)", background: "var(--bg)" }}
+    >
+      <div
+        className="composer-focus flex items-end gap-2 rounded-2xl px-4 py-2 transition-all"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+      >
         <textarea
           ref={textareaRef}
           value={value}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder="Escribe tu consulta sobre NIE, TIE, visados..."
-          className="flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none overflow-hidden"
-          style={{ overflowY: "hidden" }}
+          placeholder="Escribe tu consulta sobre NIE, TIE, visados…"
+          className="flex-1 resize-none overflow-hidden bg-transparent text-sm outline-none placeholder:text-[var(--text-muted)] disabled:opacity-60"
+          style={{ overflowY: "hidden", color: "var(--text)" }}
           disabled={isLoading || disabled}
         />
         <button
           type="button"
           onClick={handleSend}
           disabled={!canSend}
-          className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ background: "var(--chat-user-grad)", color: "var(--chat-user-ink)" }}
           aria-label="Enviar mensaje"
         >
           {isLoading ? (
