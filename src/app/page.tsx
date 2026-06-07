@@ -1,6 +1,7 @@
 import Link from "next/link";
 import UpgradeButton from "@/components/UpgradeButton";
 import { createClient } from "@/lib/auth/server";
+import { paidPlansEnabled } from "@/lib/plans";
 
 /* ─── Nav ────────────────────────────────────────────────────────────────── */
 async function Nav() {
@@ -441,6 +442,7 @@ function HowItWorks() {
 
 /* ─── Pricing ────────────────────────────────────────────────────────────── */
 function Pricing() {
+  const paidEnabled = paidPlansEnabled();
   const plans = [
     {
       name: "Básico",
@@ -534,7 +536,7 @@ function Pricing() {
                   className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-1 rounded-full"
                   style={{ background: "var(--accent)", color: "white" }}
                 >
-                  MÁS POPULAR
+                  {!plan.href && !paidEnabled ? "PRÓXIMAMENTE" : "MÁS POPULAR"}
                 </div>
               )}
 
@@ -568,12 +570,26 @@ function Pricing() {
                 >
                   {plan.cta}
                 </Link>
-              ) : (
+              ) : paidEnabled ? (
                 <UpgradeButton
                   plan={plan.stripePlan as "pro" | "empresa"}
                   label={plan.cta}
                   highlight={plan.highlight}
                 />
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="block w-full text-center py-3 rounded-xl font-semibold text-sm mb-8 cursor-not-allowed opacity-60"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    color: "var(--text-muted)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                >
+                  Próximamente
+                </button>
               )}
 
               <ul className="space-y-3">

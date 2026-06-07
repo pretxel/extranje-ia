@@ -1,7 +1,12 @@
 import { getOrCreateUser } from "@/lib/auth/user";
+import { paidPlansEnabled } from "@/lib/plans";
 import { STRIPE_PRICES, stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
+  if (!paidPlansEnabled()) {
+    return new Response("Paid plans not available yet", { status: 503 });
+  }
+
   const user = await getOrCreateUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
