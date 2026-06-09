@@ -59,7 +59,7 @@ export function buildMessages({
 
 export function createChatModel(): ChatOpenAI {
   return new ChatOpenAI({
-    model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o",
+    model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o-mini",
     temperature: 0,
     streaming: true,
     apiKey: process.env.OPENAI_API_KEY,

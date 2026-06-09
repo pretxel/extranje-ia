@@ -156,7 +156,7 @@ The route is OpenAI-locked and ignores `AI_EMBEDDING_PROVIDER`.
 AGENT_CHAT_ENABLED=true
 OPENAI_API_KEY=sk-...
 # Optional overrides
-OPENAI_AGENT_MODEL=gpt-4o
+OPENAI_AGENT_MODEL=gpt-4o-mini
 OPENAI_AGENT_EMBEDDING_MODEL=text-embedding-3-small
 ```
 

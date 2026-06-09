@@ -101,19 +101,19 @@ describe("buildMessages", () => {
 });
 
 describe("createChatModel", () => {
-  it("returns a ChatOpenAI with temperature 0, streaming, default model gpt-4o", () => {
+  it("returns a ChatOpenAI with temperature 0, streaming, default model gpt-4o-mini", () => {
     delete process.env.OPENAI_CHAT_MODEL;
     const model = createChatModel();
     expect(model).toBeInstanceOf(ChatOpenAI);
     expect(model.temperature).toBe(0);
     expect(model.streaming).toBe(true);
-    expect(model.model).toBe("gpt-4o");
+    expect(model.model).toBe("gpt-4o-mini");
   });
 
   it("honours the OPENAI_CHAT_MODEL override", () => {
-    process.env.OPENAI_CHAT_MODEL = "gpt-4o-mini";
+    process.env.OPENAI_CHAT_MODEL = "gpt-4o";
     const model = createChatModel();
-    expect(model.model).toBe("gpt-4o-mini");
+    expect(model.model).toBe("gpt-4o");
     delete process.env.OPENAI_CHAT_MODEL;
   });
 });

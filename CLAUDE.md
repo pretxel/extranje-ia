@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Auth | Clerk v6 |
 | Database | PostgreSQL + pgvector — Prisma 7 with `@prisma/adapter-pg` |
 | RAG | LangChain (`RecursiveCharacterTextSplitter`, `PGVectorStore`, `OpenAIEmbeddings`) |
-| LLM | GPT-4o — RAG chat via LangChain `ChatOpenAI` (`@langchain/openai`), streamed to `useChat` (Vercel AI SDK v6) |
+| LLM | GPT-4o-mini — RAG chat via LangChain `ChatOpenAI` (`@langchain/openai`), streamed to `useChat` (Vercel AI SDK v6) |
 | Scraping | axios + cheerio (BOE Código de Extranjería index) |
 | Payments | Stripe v17 |
 | Linting | Biome (primary) + ESLint |
@@ -40,7 +40,7 @@ BOE biblioteca_juridica/codigos (Código de Extranjería index)
    Top-k chunks + document metadata from PostgreSQL
         |
         v  src/app/api/chat/route.ts  (LangChain ChatOpenAI chain → AI SDK UI message stream)
-   GPT-4o response streamed with source-url parts
+   GPT-4o-mini response streamed with source-url parts
 ```
 
 Key constraint: **the LLM must only answer using retrieved context** — no free generation about regulations.

@@ -13,7 +13,7 @@ function requireOpenAIKey(): string {
 
 export function agentChatModel() {
   requireOpenAIKey();
-  return openai(process.env.OPENAI_AGENT_MODEL ?? "gpt-4o");
+  return openai(process.env.OPENAI_AGENT_MODEL ?? "gpt-4o-mini");
 }
 
 export function agentEmbeddings(): OpenAIEmbeddings {
